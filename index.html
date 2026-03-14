@@ -6,47 +6,106 @@
 <title>ZHAN — Visual Artist</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --black:#0a0a0a;--white:#f5f0eb;--cream:#e8e0d5;
-    --gold:#c9a96e;--rust:#b54e2a;--dark:#141210;--mid:#2a2520;
-  }
+  :root{--black:#0a0a0a;--white:#f5f0eb;--cream:#e8e0d5;--gold:#c9a96e;--rust:#b54e2a;--dark:#141210;--mid:#2a2520;}
   *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
   html{scroll-behavior:smooth;}
   body{background:var(--black);color:var(--white);font-family:'DM Sans',sans-serif;font-weight:300;overflow-x:hidden;}
+  body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:100;opacity:.4;}
 
-  /* ===== EDIT MODE SYSTEM ===== */
-  #editToggleBtn{
-    position:fixed;bottom:32px;right:32px;z-index:8000;
-    background:var(--gold);color:var(--black);border:none;
-    font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;letter-spacing:3px;text-transform:uppercase;
-    padding:14px 24px;cursor:pointer;display:flex;align-items:center;gap:10px;
-    box-shadow:0 8px 40px rgba(201,169,110,.4);transition:background .3s,transform .2s;
+  /* =============================================
+     ADMIN LOGIN MODAL — invisible to visitors
+  ============================================= */
+  #adminGate{
+    display:none;position:fixed;inset:0;z-index:99999;
+    background:rgba(10,10,10,.97);
+    align-items:center;justify-content:center;
   }
-  #editToggleBtn:hover{background:var(--rust);transform:translateY(-2px);}
-  .edit-active #editToggleBtn{background:var(--rust);}
+  #adminGate.open{display:flex;}
+  .gate-box{
+    width:380px;max-width:90vw;
+    border:1px solid rgba(201,169,110,.2);
+    background:var(--dark);padding:48px 40px;
+    position:relative;
+  }
+  .gate-box::before{
+    content:'';position:absolute;top:-1px;left:40px;right:40px;height:2px;
+    background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  }
+  .gate-logo{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:6px;color:var(--white);margin-bottom:4px;}
+  .gate-logo span{color:var(--gold);}
+  .gate-sub{font-size:9px;letter-spacing:4px;text-transform:uppercase;color:rgba(201,169,110,.5);margin-bottom:36px;}
+  .gate-label{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(201,169,110,.6);margin-bottom:8px;display:block;}
+  .gate-input{
+    width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(201,169,110,.2);
+    color:var(--white);padding:13px 16px;font-family:'DM Sans',sans-serif;
+    font-size:14px;outline:none;transition:border-color .3s;letter-spacing:2px;cursor:text;
+    margin-bottom:12px;
+  }
+  .gate-input:focus{border-color:var(--gold);}
+  .gate-error{font-size:11px;color:var(--rust);letter-spacing:1px;margin-bottom:16px;min-height:18px;transition:opacity .3s;}
+  .gate-hint{font-size:10px;color:rgba(201,169,110,.3);letter-spacing:1px;margin-bottom:24px;line-height:1.6;}
+  .gate-btn{
+    width:100%;background:var(--gold);color:var(--black);border:none;padding:15px;
+    font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;letter-spacing:3px;text-transform:uppercase;
+    cursor:pointer;transition:background .3s;position:relative;overflow:hidden;
+  }
+  .gate-btn::before{content:'';position:absolute;inset:0;background:var(--rust);transform:scaleX(0);transform-origin:right;transition:transform .4s;}
+  .gate-btn:hover::before{transform:scaleX(1);transform-origin:left;}
+  .gate-btn span{position:relative;z-index:1;}
+  .gate-close{position:absolute;top:16px;right:16px;background:none;border:none;color:rgba(201,169,110,.3);font-size:18px;cursor:pointer;transition:color .2s;padding:4px 8px;}
+  .gate-close:hover{color:var(--gold);}
 
-  [contenteditable="true"]{
+  /* Admin bar — only visible when admin is logged in */
+  #adminBar{
+    display:none;position:fixed;top:0;left:0;right:0;z-index:8500;
+    background:rgba(10,10,10,.95);border-bottom:1px solid rgba(201,169,110,.2);
+    padding:0 32px;height:48px;
+    align-items:center;justify-content:space-between;gap:16px;
+    backdrop-filter:blur(8px);
+  }
+  .admin-logged #adminBar{display:flex;}
+  .admin-logged nav{top:48px;}
+
+  .abar-left{display:flex;align-items:center;gap:12px;}
+  .abar-badge{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);background:rgba(201,169,110,.1);border:1px solid rgba(201,169,110,.2);padding:4px 10px;}
+  .abar-name{font-size:11px;color:rgba(245,240,235,.4);letter-spacing:1px;}
+
+  .abar-right{display:flex;align-items:center;gap:8px;}
+  .abar-btn{
+    background:none;border:1px solid rgba(201,169,110,.25);color:rgba(245,240,235,.7);
+    padding:6px 16px;font-family:'DM Sans',sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;
+    cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:8px;
+  }
+  .abar-btn:hover{border-color:var(--gold);color:var(--gold);}
+  .abar-btn.active{background:rgba(201,169,110,.12);border-color:var(--gold);color:var(--gold);}
+  .abar-btn svg{width:13px;height:13px;}
+  .abar-logout{border-color:rgba(181,78,42,.3);color:rgba(181,78,42,.6);}
+  .abar-logout:hover{border-color:var(--rust);color:var(--rust);background:rgba(181,78,42,.08);}
+  .abar-sep{width:1px;height:20px;background:rgba(201,169,110,.15);}
+
+  /* Edit mode styles — only activate if admin is logged in */
+  .admin-logged.edit-active [contenteditable="true"]{
     outline:1px dashed rgba(201,169,110,.5);outline-offset:3px;
     cursor:text !important;transition:outline-color .2s,background .2s;border-radius:2px;
   }
-  [contenteditable="true"]:focus{outline:1px solid var(--gold);background:rgba(201,169,110,.06);}
+  .admin-logged.edit-active [contenteditable="true"]:focus{outline:1px solid var(--gold);background:rgba(201,169,110,.06);}
   [contenteditable="true"]:empty::before{content:attr(data-ph);color:rgba(201,169,110,.3);pointer-events:none;}
 
-  /* Upload overlay */
+  /* Upload overlay — only in admin+edit mode */
   .upload-zone{position:relative;overflow:hidden;}
   .upload-overlay{
     position:absolute;inset:0;background:rgba(10,10,10,.75);
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
     opacity:0;transition:opacity .3s;pointer-events:none;z-index:10;
   }
-  .edit-active .upload-zone:hover .upload-overlay{opacity:1;pointer-events:all;}
+  .admin-logged.edit-active .upload-zone:hover .upload-overlay{opacity:1;pointer-events:all;}
   .upload-overlay span{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);font-family:'DM Sans',sans-serif;}
   .upload-overlay svg{color:var(--gold);}
   .upload-overlay input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;z-index:2;}
 
-  /* Port item action buttons */
+  /* Port action buttons */
   .port-actions{position:absolute;top:10px;left:10px;display:none;gap:6px;z-index:20;}
-  .edit-active .port-actions{display:flex;}
+  .admin-logged.edit-active .port-actions{display:flex;}
   .pac{width:28px;height:28px;border:none;background:rgba(10,10,10,.85);color:var(--gold);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;transition:background .2s;}
   .pac:hover{background:var(--rust);color:#fff;}
 
@@ -59,11 +118,17 @@
   }
   #addPortBtn svg{width:28px;height:28px;}
   #addPortBtn:hover{background:rgba(201,169,110,.1);border-color:var(--gold);}
-  .edit-active #addPortBtn{display:flex;}
+  .admin-logged.edit-active #addPortBtn{display:flex;}
+
+  /* Testimonial edit controls */
+  .test-edit{display:none;gap:10px;margin-top:20px;justify-content:center;flex-wrap:wrap;}
+  .admin-logged.edit-active .test-edit{display:flex;}
+  .tebtn{background:none;border:1px solid rgba(201,169,110,.3);color:var(--gold);padding:6px 16px;font-size:9px;letter-spacing:2px;text-transform:uppercase;font-family:'DM Sans',sans-serif;cursor:pointer;transition:background .2s,border-color .2s;}
+  .tebtn:hover{background:rgba(201,169,110,.1);border-color:var(--gold);}
 
   /* Toast */
-  #toast{position:fixed;bottom:100px;right:32px;z-index:9500;background:var(--dark);border:1px solid rgba(201,169,110,.25);color:var(--white);padding:12px 20px;font-size:12px;letter-spacing:1px;opacity:0;transform:translateY(8px);transition:opacity .3s,transform .3s;pointer-events:none;}
-  #toast.show{opacity:1;transform:translateY(0);}
+  #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(8px);z-index:9500;background:var(--dark);border:1px solid rgba(201,169,110,.25);color:var(--white);padding:11px 24px;font-size:12px;letter-spacing:1px;opacity:0;transition:opacity .3s,transform .3s;pointer-events:none;white-space:nowrap;}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
   /* Port edit modal */
   #portModal{display:none;position:fixed;inset:0;z-index:7000;background:rgba(10,10,10,.88);align-items:center;justify-content:center;}
@@ -82,21 +147,15 @@
   .mbtn-c{background:rgba(255,255,255,.06);color:var(--white);}
   .mbtn-c:hover{background:rgba(255,255,255,.1);}
 
-  /* Photo fullscreen */
+  /* Photo modal */
   #photoModal{display:none;position:fixed;inset:0;z-index:7500;background:rgba(10,10,10,.95);align-items:center;justify-content:center;cursor:zoom-out;}
   #photoModal.open{display:flex;}
   #photoModalImg{max-width:90vw;max-height:88vh;object-fit:contain;}
   #pmClose{position:absolute;top:24px;right:24px;background:none;border:1px solid rgba(201,169,110,.3);color:var(--gold);width:40px;height:40px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s;}
   #pmClose:hover{background:rgba(201,169,110,.1);}
 
-  /* Testimonial edit controls */
-  .test-edit{display:none;gap:10px;margin-top:20px;justify-content:center;flex-wrap:wrap;}
-  .edit-active .test-edit{display:flex;}
-  .tebtn{background:none;border:1px solid rgba(201,169,110,.3);color:var(--gold);padding:6px 16px;font-size:9px;letter-spacing:2px;text-transform:uppercase;font-family:'DM Sans',sans-serif;cursor:pointer;transition:background .2s,border-color .2s;}
-  .tebtn:hover{background:rgba(201,169,110,.1);border-color:var(--gold);}
-
   /* NAV */
-  nav{position:fixed;top:0;left:0;right:0;z-index:50;padding:28px 60px;display:flex;justify-content:space-between;align-items:center;}
+  nav{position:fixed;top:0;left:0;right:0;z-index:50;padding:28px 60px;display:flex;justify-content:space-between;align-items:center;transition:top .3s;}
   nav::before{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,rgba(10,10,10,.9) 0%,transparent 100%);pointer-events:none;}
   .nav-logo{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:6px;color:var(--white);text-decoration:none;position:relative;}
   .nav-logo span{color:var(--gold);}
@@ -138,7 +197,7 @@
   .about-section{background:var(--dark);display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;}
   .about-visual{position:relative;height:560px;}
   .about-img-frame{position:absolute;inset:0;background:linear-gradient(135deg,var(--mid) 0%,#1a1208 100%);border:1px solid rgba(201,169,110,.2);display:flex;align-items:center;justify-content:center;overflow:hidden;}
-  .about-img-frame.empty::before{content:'KLIK UPLOAD UNTUK\A FOTO PROFIL';white-space:pre;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:3px;color:rgba(201,169,110,.2);text-align:center;line-height:1.8;}
+  .about-img-frame.empty::before{content:'FOTO PROFIL';font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:3px;color:rgba(201,169,110,.15);text-align:center;}
   .about-img-frame img{width:100%;height:100%;object-fit:cover;display:block;}
   .about-frame-accent{position:absolute;bottom:-20px;right:-20px;width:200px;height:200px;border-right:2px solid var(--gold);border-bottom:2px solid var(--gold);pointer-events:none;}
   .about-frame-accent2{position:absolute;top:-20px;left:-20px;width:100px;height:100px;border-left:1px solid rgba(201,169,110,.3);border-top:1px solid rgba(201,169,110,.3);pointer-events:none;}
@@ -166,7 +225,7 @@
   /* PORTFOLIO */
   .portfolio-section{background:var(--dark);padding-bottom:60px;}
   .portfolio-filter{display:flex;gap:32px;margin-bottom:48px;flex-wrap:wrap;}
-  .filter-btn{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:rgba(245,240,235,.4);background:none;border:none;transition:color .3s;padding:0;position:relative;}
+  .filter-btn{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:rgba(245,240,235,.4);background:none;border:none;cursor:pointer;transition:color .3s;padding:0;position:relative;}
   .filter-btn::after{content:'';position:absolute;bottom:-4px;left:0;width:0;height:1px;background:var(--gold);transition:width .3s;}
   .filter-btn.active,.filter-btn:hover{color:var(--gold);}
   .filter-btn.active::after,.filter-btn:hover::after{width:100%;}
@@ -212,7 +271,7 @@
   .testimonial-quote::before{content:'"';font-family:'Bebas Neue',sans-serif;font-size:120px;color:rgba(201,169,110,.1);position:absolute;top:-40px;left:-20px;line-height:1;}
   .testimonial-author{font-size:11px;letter-spacing:4px;text-transform:uppercase;color:var(--gold);}
   .testimonial-dots{display:flex;justify-content:center;gap:8px;margin-top:40px;}
-  .dot{width:6px;height:6px;border-radius:50%;background:rgba(201,169,110,.3);transition:background .3s,transform .3s;}
+  .dot{width:6px;height:6px;border-radius:50%;background:rgba(201,169,110,.3);cursor:pointer;transition:background .3s,transform .3s;}
   .dot.active{background:var(--gold);transform:scale(1.5);}
 
   /* CONTACT */
@@ -224,7 +283,7 @@
   .form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--gold);}
   .form-textarea{height:120px;}
   .form-select option{background:var(--dark);}
-  .btn-submit{background:var(--gold);color:var(--black);border:none;padding:18px 48px;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;letter-spacing:3px;text-transform:uppercase;align-self:flex-start;transition:background .3s;position:relative;overflow:hidden;}
+  .btn-submit{background:var(--gold);color:var(--black);border:none;padding:18px 48px;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;letter-spacing:3px;text-transform:uppercase;cursor:pointer;align-self:flex-start;transition:background .3s;position:relative;overflow:hidden;}
   .btn-submit::before{content:'';position:absolute;inset:0;background:var(--rust);transform:scaleX(0);transform-origin:right;transition:transform .4s;}
   .btn-submit:hover::before{transform:scaleX(1);transform-origin:left;}
   .btn-submit span{position:relative;z-index:1;}
@@ -267,17 +326,49 @@
 </head>
 <body>
 
-<div class="cursor" id="cursor"></div>
-<div class="cursor-ring" id="cursorRing"></div>
 <div id="toast"></div>
 
-<!-- EDIT TOGGLE BUTTON -->
-<button id="editToggleBtn" onclick="toggleEdit()">
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-  <span id="editBtnTxt">Mode Edit</span>
-</button>
+<!-- =============================================
+     ADMIN LOGIN GATE — invisible to visitors
+     Access: ketik "admin" dari mana saja, atau
+     kunjungi URL dengan ?admin di akhir
+============================================= -->
+<div id="adminGate">
+  <div class="gate-box">
+    <button class="gate-close" onclick="closeGate()">✕</button>
+    <div class="gate-logo">ZH<span>A</span>N</div>
+    <div class="gate-sub">Admin Panel</div>
+    <label class="gate-label">Password</label>
+    <input class="gate-input" id="gatePass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    <div class="gate-error" id="gateErr"></div>
+    <div class="gate-hint">
+      💡 Cara akses: ketik <strong style="color:rgba(201,169,110,.6)">admin</strong> di halaman mana saja<br>
+      atau tambahkan <strong style="color:rgba(201,169,110,.6)">?admin</strong> di akhir URL
+    </div>
+    <button class="gate-btn" onclick="doLogin()"><span>Masuk →</span></button>
+  </div>
+</div>
 
-<!-- PORTFOLIO INFO MODAL -->
+<!-- ADMIN BAR — only shown when logged in -->
+<div id="adminBar">
+  <div class="abar-left">
+    <div class="abar-badge">Admin</div>
+    <div class="abar-name">Zhan Visual — CMS</div>
+  </div>
+  <div class="abar-right">
+    <button class="abar-btn" id="editToggleBtn" onclick="toggleEdit()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      <span id="editBtnTxt">Edit Konten</span>
+    </button>
+    <div class="abar-sep"></div>
+    <button class="abar-btn abar-logout" onclick="doLogout()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Keluar
+    </button>
+  </div>
+</div>
+
+<!-- PORTFOLIO EDIT MODAL -->
 <div id="portModal">
   <div class="mbox">
     <div class="mtitle">Edit Item Portfolio</div>
@@ -367,34 +458,10 @@
   <div class="section-label reveal">Layanan</div>
   <h2 class="section-title reveal reveal-delay-1">APA YANG<br><em>Saya Tawarkan</em></h2>
   <div class="services-grid">
-    <div class="service-card reveal">
-      <div class="service-num">01</div>
-      <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="12" cy="12" r="3"/><path d="M20.94 13a8.912 8.912 0 0 0 .06-1 8.912 8.912 0 0 0-.06-1l-2.13-1.23A7.003 7.003 0 0 0 17.6 7.5l.23-2.45A9 9 0 0 0 16 4.28L14 5.54A7 7 0 0 0 12 5a7 7 0 0 0-2 .54L8 4.28A9 9 0 0 0 6.17 5.05L6.4 7.5A7.003 7.003 0 0 0 5.19 9.77L3.06 11A9 9 0 0 0 3 12a9 9 0 0 0 .06 1l2.13 1.23A7.003 7.003 0 0 0 6.4 16.5l-.23 2.45A9 9 0 0 0 8 19.72L10 18.46A7 7 0 0 0 12 19a7 7 0 0 0 2-.54l2 1.26a9 9 0 0 0 1.83-.77L17.6 16.5a7.003 7.003 0 0 0 1.21-2.27L20.94 13Z"/></svg>
-      <div class="service-name" data-e contenteditable="false" data-ph="Nama Layanan">Fotografi</div>
-      <p class="service-desc" data-e contenteditable="false" data-ph="Deskripsi layanan...">Portrait, produk, event, dan dokumentasi — setiap momen diabadikan dengan komposisi dan cahaya yang sempurna.</p>
-      <div class="service-tags"><span class="tag">Portrait</span><span class="tag">Produk</span><span class="tag">Event</span><span class="tag">Landscape</span></div>
-    </div>
-    <div class="service-card reveal reveal-delay-1">
-      <div class="service-num">02</div>
-      <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="2" y="7" width="13" height="10" rx="2"/><path d="m22 7-5 5 5 5V7Z"/></svg>
-      <div class="service-name" data-e contenteditable="false" data-ph="Nama Layanan">Videografi</div>
-      <p class="service-desc" data-e contenteditable="false" data-ph="Deskripsi layanan...">Wedding, komersial, dokumenter — produksi video cinematic berkualitas tinggi dari pengambilan gambar hingga penyuntingan akhir.</p>
-      <div class="service-tags"><span class="tag">Wedding</span><span class="tag">Komersial</span><span class="tag">Dokumenter</span></div>
-    </div>
-    <div class="service-card reveal reveal-delay-2">
-      <div class="service-num">03</div>
-      <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-      <div class="service-name" data-e contenteditable="false" data-ph="Nama Layanan">Video Editing</div>
-      <p class="service-desc" data-e contenteditable="false" data-ph="Deskripsi layanan...">Post-produksi profesional: color grading, motion graphics, VFX, dan sound design untuk hasil akhir yang memukau.</p>
-      <div class="service-tags"><span class="tag">Color Grade</span><span class="tag">Motion</span><span class="tag">VFX</span></div>
-    </div>
-    <div class="service-card reveal reveal-delay-3">
-      <div class="service-num">04</div>
-      <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-      <div class="service-name" data-e contenteditable="false" data-ph="Nama Layanan">Desain Grafis</div>
-      <p class="service-desc" data-e contenteditable="false" data-ph="Deskripsi layanan...">Brand identity, poster, konten sosial media, dan material marketing yang kuat secara visual dan komunikatif.</p>
-      <div class="service-tags"><span class="tag">Branding</span><span class="tag">Poster</span><span class="tag">Social Media</span></div>
-    </div>
+    <div class="service-card reveal"><div class="service-num">01</div><svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="12" cy="12" r="3"/><path d="M20.94 13a8.912 8.912 0 0 0 .06-1 8.912 8.912 0 0 0-.06-1l-2.13-1.23A7.003 7.003 0 0 0 17.6 7.5l.23-2.45A9 9 0 0 0 16 4.28L14 5.54A7 7 0 0 0 12 5a7 7 0 0 0-2 .54L8 4.28A9 9 0 0 0 6.17 5.05L6.4 7.5A7.003 7.003 0 0 0 5.19 9.77L3.06 11A9 9 0 0 0 3 12a9 9 0 0 0 .06 1l2.13 1.23A7.003 7.003 0 0 0 6.4 16.5l-.23 2.45A9 9 0 0 0 8 19.72L10 18.46A7 7 0 0 0 12 19a7 7 0 0 0 2-.54l2 1.26a9 9 0 0 0 1.83-.77L17.6 16.5a7.003 7.003 0 0 0 1.21-2.27L20.94 13Z"/></svg><div class="service-name" data-e contenteditable="false" data-ph="Nama Layanan">Fotografi</div><p class="service-desc" data-e contenteditable="false" data-ph="Deskripsi...">Portrait, produk, event, dan dokumentasi — setiap momen diabadikan dengan komposisi dan cahaya yang sempurna.</p><div class="service-tags"><span class="tag">Portrait</span><span class="tag">Produk</span><span class="tag">Event</span><span class="tag">Landscape</span></div></div>
+    <div class="service-card reveal reveal-delay-1"><div class="service-num">02</div><svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="2" y="7" width="13" height="10" rx="2"/><path d="m22 7-5 5 5 5V7Z"/></svg><div class="service-name" data-e contenteditable="false" data-ph="Nama Layanan">Videografi</div><p class="service-desc" data-e contenteditable="false" data-ph="Deskripsi...">Wedding, komersial, dokumenter — produksi video cinematic berkualitas tinggi dari pengambilan gambar hingga penyuntingan akhir.</p><div class="service-tags"><span class="tag">Wedding</span><span class="tag">Komersial</span><span class="tag">Dokumenter</span></div></div>
+    <div class="service-card reveal reveal-delay-2"><div class="service-num">03</div><svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg><div class="service-name" data-e contenteditable="false" data-ph="Nama Layanan">Video Editing</div><p class="service-desc" data-e contenteditable="false" data-ph="Deskripsi...">Post-produksi profesional: color grading, motion graphics, VFX, dan sound design untuk hasil akhir yang memukau.</p><div class="service-tags"><span class="tag">Color Grade</span><span class="tag">Motion</span><span class="tag">VFX</span></div></div>
+    <div class="service-card reveal reveal-delay-3"><div class="service-num">04</div><svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg><div class="service-name" data-e contenteditable="false" data-ph="Nama Layanan">Desain Grafis</div><p class="service-desc" data-e contenteditable="false" data-ph="Deskripsi...">Brand identity, poster, konten sosial media, dan material marketing yang kuat secara visual dan komunikatif.</p><div class="service-tags"><span class="tag">Branding</span><span class="tag">Poster</span><span class="tag">Social Media</span></div></div>
   </div>
 </section>
 
@@ -410,60 +477,14 @@
     <button class="filter-btn">Desain</button>
   </div>
   <div class="portfolio-grid" id="pgrid">
-
-    <div class="port-item" data-cat="Fotografi">
-      <div class="port-actions"><button class="pac" title="Edit info" onclick="openPort(this.closest('.port-item'))">✎</button><button class="pac" title="Hapus" onclick="delPort(this.closest('.port-item'))">✕</button></div>
-      <div class="port-bg upload-zone"><span class="port-placeholder">FOTO 01</span><div class="upload-overlay"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Upload Media</span><input type="file" accept="image/*,video/*" onchange="uploadPort(this)"></div></div>
-      <div class="port-overlay"><div class="port-title">Golden Hour Portrait</div><div class="port-cat">Fotografi</div></div>
-      <div class="port-view" onclick="viewPort(this.closest('.port-item'))"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></div>
-    </div>
-
-    <div class="port-item" data-cat="Videografi">
-      <div class="port-actions"><button class="pac" onclick="openPort(this.closest('.port-item'))">✎</button><button class="pac" onclick="delPort(this.closest('.port-item'))">✕</button></div>
-      <div class="port-bg upload-zone"><span class="port-placeholder">VIDEO 01</span><div class="upload-overlay"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Upload Media</span><input type="file" accept="image/*,video/*" onchange="uploadPort(this)"></div></div>
-      <div class="port-overlay"><div class="port-title">Cinematic Promo</div><div class="port-cat">Videografi</div></div>
-      <div class="port-view" onclick="viewPort(this.closest('.port-item'))"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></div>
-    </div>
-
-    <div class="port-item" data-cat="Desain Grafis">
-      <div class="port-actions"><button class="pac" onclick="openPort(this.closest('.port-item'))">✎</button><button class="pac" onclick="delPort(this.closest('.port-item'))">✕</button></div>
-      <div class="port-bg upload-zone"><span class="port-placeholder">DESAIN 01</span><div class="upload-overlay"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Upload Media</span><input type="file" accept="image/*,video/*" onchange="uploadPort(this)"></div></div>
-      <div class="port-overlay"><div class="port-title">Brand Identity</div><div class="port-cat">Desain Grafis</div></div>
-      <div class="port-view" onclick="viewPort(this.closest('.port-item'))"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></div>
-    </div>
-
-    <div class="port-item" data-cat="Fotografi">
-      <div class="port-actions"><button class="pac" onclick="openPort(this.closest('.port-item'))">✎</button><button class="pac" onclick="delPort(this.closest('.port-item'))">✕</button></div>
-      <div class="port-bg upload-zone"><span class="port-placeholder">FOTO 02</span><div class="upload-overlay"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Upload Media</span><input type="file" accept="image/*,video/*" onchange="uploadPort(this)"></div></div>
-      <div class="port-overlay"><div class="port-title">Urban Street</div><div class="port-cat">Fotografi</div></div>
-      <div class="port-view" onclick="viewPort(this.closest('.port-item'))"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></div>
-    </div>
-
-    <div class="port-item" data-cat="Post Production">
-      <div class="port-actions"><button class="pac" onclick="openPort(this.closest('.port-item'))">✎</button><button class="pac" onclick="delPort(this.closest('.port-item'))">✕</button></div>
-      <div class="port-bg upload-zone"><span class="port-placeholder">EDIT 01</span><div class="upload-overlay"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Upload Media</span><input type="file" accept="image/*,video/*" onchange="uploadPort(this)"></div></div>
-      <div class="port-overlay"><div class="port-title">Color Grading</div><div class="port-cat">Post Production</div></div>
-      <div class="port-view" onclick="viewPort(this.closest('.port-item'))"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></div>
-    </div>
-
-    <div class="port-item" data-cat="Videografi">
-      <div class="port-actions"><button class="pac" onclick="openPort(this.closest('.port-item'))">✎</button><button class="pac" onclick="delPort(this.closest('.port-item'))">✕</button></div>
-      <div class="port-bg upload-zone"><span class="port-placeholder">VIDEO 02</span><div class="upload-overlay"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Upload Media</span><input type="file" accept="image/*,video/*" onchange="uploadPort(this)"></div></div>
-      <div class="port-overlay"><div class="port-title">Wedding Film</div><div class="port-cat">Videografi</div></div>
-      <div class="port-view" onclick="viewPort(this.closest('.port-item'))"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></div>
-    </div>
-
-    <div class="port-item" data-cat="Desain Grafis">
-      <div class="port-actions"><button class="pac" onclick="openPort(this.closest('.port-item'))">✎</button><button class="pac" onclick="delPort(this.closest('.port-item'))">✕</button></div>
-      <div class="port-bg upload-zone"><span class="port-placeholder">DESAIN 02</span><div class="upload-overlay"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Upload Media</span><input type="file" accept="image/*,video/*" onchange="uploadPort(this)"></div></div>
-      <div class="port-overlay"><div class="port-title">Poster Series</div><div class="port-cat">Desain Grafis</div></div>
-      <div class="port-view" onclick="viewPort(this.closest('.port-item'))"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></div>
-    </div>
-
-    <button id="addPortBtn" onclick="addPort()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-      Tambah Item
-    </button>
+    <div class="port-item" data-cat="Fotografi"><div class="port-actions"><button class="pac" onclick="openPort(this.closest('.port-item'))">✎</button><button class="pac" onclick="delPort(this.closest('.port-item'))">✕</button></div><div class="port-bg upload-zone"><span class="port-placeholder">FOTO 01</span><div class="upload-overlay"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Upload Media</span><input type="file" accept="image/*,video/*" onchange="uploadPort(this)"></div></div><div class="port-overlay"><div class="port-title">Golden Hour Portrait</div><div class="port-cat">Fotografi</div></div><div class="port-view" onclick="viewPort(this.closest('.port-item'))"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></div></div>
+    <div class="port-item" data-cat="Videografi"><div class="port-actions"><button class="pac" onclick="openPort(this.closest('.port-item'))">✎</button><button class="pac" onclick="delPort(this.closest('.port-item'))">✕</button></div><div class="port-bg upload-zone"><span class="port-placeholder">VIDEO 01</span><div class="upload-overlay"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Upload Media</span><input type="file" accept="image/*,video/*" onchange="uploadPort(this)"></div></div><div class="port-overlay"><div class="port-title">Cinematic Promo</div><div class="port-cat">Videografi</div></div><div class="port-view" onclick="viewPort(this.closest('.port-item'))"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></div></div>
+    <div class="port-item" data-cat="Desain Grafis"><div class="port-actions"><button class="pac" onclick="openPort(this.closest('.port-item'))">✎</button><button class="pac" onclick="delPort(this.closest('.port-item'))">✕</button></div><div class="port-bg upload-zone"><span class="port-placeholder">DESAIN 01</span><div class="upload-overlay"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Upload Media</span><input type="file" accept="image/*,video/*" onchange="uploadPort(this)"></div></div><div class="port-overlay"><div class="port-title">Brand Identity</div><div class="port-cat">Desain Grafis</div></div><div class="port-view" onclick="viewPort(this.closest('.port-item'))"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></div></div>
+    <div class="port-item" data-cat="Fotografi"><div class="port-actions"><button class="pac" onclick="openPort(this.closest('.port-item'))">✎</button><button class="pac" onclick="delPort(this.closest('.port-item'))">✕</button></div><div class="port-bg upload-zone"><span class="port-placeholder">FOTO 02</span><div class="upload-overlay"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Upload Media</span><input type="file" accept="image/*,video/*" onchange="uploadPort(this)"></div></div><div class="port-overlay"><div class="port-title">Urban Street</div><div class="port-cat">Fotografi</div></div><div class="port-view" onclick="viewPort(this.closest('.port-item'))"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></div></div>
+    <div class="port-item" data-cat="Post Production"><div class="port-actions"><button class="pac" onclick="openPort(this.closest('.port-item'))">✎</button><button class="pac" onclick="delPort(this.closest('.port-item'))">✕</button></div><div class="port-bg upload-zone"><span class="port-placeholder">EDIT 01</span><div class="upload-overlay"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Upload Media</span><input type="file" accept="image/*,video/*" onchange="uploadPort(this)"></div></div><div class="port-overlay"><div class="port-title">Color Grading</div><div class="port-cat">Post Production</div></div><div class="port-view" onclick="viewPort(this.closest('.port-item'))"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></div></div>
+    <div class="port-item" data-cat="Videografi"><div class="port-actions"><button class="pac" onclick="openPort(this.closest('.port-item'))">✎</button><button class="pac" onclick="delPort(this.closest('.port-item'))">✕</button></div><div class="port-bg upload-zone"><span class="port-placeholder">VIDEO 02</span><div class="upload-overlay"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Upload Media</span><input type="file" accept="image/*,video/*" onchange="uploadPort(this)"></div></div><div class="port-overlay"><div class="port-title">Wedding Film</div><div class="port-cat">Videografi</div></div><div class="port-view" onclick="viewPort(this.closest('.port-item'))"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></div></div>
+    <div class="port-item" data-cat="Desain Grafis"><div class="port-actions"><button class="pac" onclick="openPort(this.closest('.port-item'))">✎</button><button class="pac" onclick="delPort(this.closest('.port-item'))">✕</button></div><div class="port-bg upload-zone"><span class="port-placeholder">DESAIN 02</span><div class="upload-overlay"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Upload Media</span><input type="file" accept="image/*,video/*" onchange="uploadPort(this)"></div></div><div class="port-overlay"><div class="port-title">Poster Series</div><div class="port-cat">Desain Grafis</div></div><div class="port-view" onclick="viewPort(this.closest('.port-item'))"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></div></div>
+    <button id="addPortBtn" onclick="addPort()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Tambah Item</button>
   </div>
 </section>
 
@@ -526,19 +547,24 @@
 </footer>
 
 <script>
-// === CURSOR ===
-const cur=document.getElementById('cursor'),ring=document.getElementById('cursorRing');
-let mx=0,my=0,rx=0,ry=0;
-document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.left=mx+'px';cur.style.top=my+'px';});
-(function animR(){rx+=(mx-rx)*.12;ry+=(my-ry)*.12;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(animR);})();
-function setHover(sel){document.querySelectorAll(sel).forEach(el=>{el.addEventListener('mouseenter',()=>{cur.classList.add('hover');ring.classList.add('hover');});el.addEventListener('mouseleave',()=>{cur.classList.remove('hover');ring.classList.remove('hover');});});}
-setHover('a,button,.port-item,.service-card,.process-step,[contenteditable]');
+// ============================================================
+// KONFIGURASI — ganti password di sini
+// ============================================================
+const ADMIN_PASSWORD = 'zhan2024';
+// Cara masuk:
+//  1. Ketik kata "admin" di halaman mana saja (huruf apapun tidak terlihat saat diketik)
+//  2. URL: tambahkan ?admin di akhir alamat website
+// ============================================================
 
-// === REVEAL ===
+// ---- STATE ----
+let isAdmin = false;
+let editOn  = false;
+
+// ---- SCROLL REVEAL ----
 const ro=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');}),{threshold:.1,rootMargin:'0px 0px -60px 0px'});
 document.querySelectorAll('.reveal').forEach(el=>ro.observe(el));
 
-// === PORTFOLIO FILTER ===
+// ---- PORTFOLIO FILTER ----
 document.querySelectorAll('.filter-btn').forEach(btn=>{
   btn.addEventListener('click',()=>{
     document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
@@ -550,26 +576,83 @@ document.querySelectorAll('.filter-btn').forEach(btn=>{
   });
 });
 
-// === TOAST ===
-function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600);}
+// ---- TOAST ----
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
 
-// === EDIT MODE ===
-let editOn=false;
-function toggleEdit(){
-  editOn=!editOn;
-  document.body.classList.toggle('edit-active',editOn);
-  document.getElementById('editBtnTxt').textContent=editOn?'✔ Selesai Edit':'Mode Edit';
-  document.querySelectorAll('[data-e]').forEach(el=>el.contentEditable=editOn?'true':'false');
-  toast(editOn?'✎ Mode Edit aktif — klik teks mana saja untuk mengedit':'✔ Perubahan disimpan di sesi ini');
-}
+// ============================================================
+// ADMIN GATE — login system
+// ============================================================
+// Secret keyword listener — visitor tidak pernah melihat ini
+let keyBuf='';
 document.addEventListener('keydown',e=>{
+  // Abaikan jika sedang mengetik di input/contenteditable
+  const tag=document.activeElement.tagName;
+  if(tag==='INPUT'||tag==='TEXTAREA'||document.activeElement.contentEditable==='true') return;
+
+  keyBuf+=e.key.toLowerCase();
+  if(keyBuf.length>6) keyBuf=keyBuf.slice(-6);
+  if(keyBuf.endsWith('admin')) openGate();
+
+  if(e.key==='Escape'){closeGate();closePhoto();closePort();}
   if(e.key==='Enter'&&document.activeElement&&document.activeElement.contentEditable==='true'){e.preventDefault();document.activeElement.blur();}
-  if(e.key==='Escape'){closePhoto();closePort();}
 });
 
-// === PROFILE PHOTO ===
+// URL param trigger: website.com/index.html?admin
+if(new URLSearchParams(window.location.search).has('admin')) openGate();
+
+function openGate(){
+  if(isAdmin) return; // already logged in
+  document.getElementById('adminGate').classList.add('open');
+  setTimeout(()=>document.getElementById('gatePass').focus(),100);
+}
+function closeGate(){
+  document.getElementById('adminGate').classList.remove('open');
+  document.getElementById('gatePass').value='';
+  document.getElementById('gateErr').textContent='';
+  keyBuf='';
+}
+function doLogin(){
+  const pw=document.getElementById('gatePass').value;
+  if(pw===ADMIN_PASSWORD){
+    isAdmin=true;
+    closeGate();
+    document.body.classList.add('admin-logged');
+    toast('👋 Selamat datang, Admin!');
+  } else {
+    document.getElementById('gateErr').textContent='⚠ Password salah. Coba lagi.';
+    document.getElementById('gatePass').value='';
+    document.getElementById('gatePass').focus();
+    // Shake effect
+    const box=document.querySelector('.gate-box');
+    box.style.animation='none';box.offsetHeight;
+    box.style.animation='shake .4s ease';
+  }
+}
+function doLogout(){
+  isAdmin=false;editOn=false;
+  document.body.classList.remove('admin-logged','edit-active');
+  document.querySelectorAll('[data-e]').forEach(el=>el.contentEditable='false');
+  document.getElementById('editBtnTxt').textContent='Edit Konten';
+  document.getElementById('editToggleBtn').classList.remove('active');
+  toast('✔ Berhasil keluar dari Admin');
+}
+
+// ============================================================
+// EDIT MODE — hanya aktif jika sudah login
+// ============================================================
+function toggleEdit(){
+  if(!isAdmin) return;
+  editOn=!editOn;
+  document.body.classList.toggle('edit-active',editOn);
+  document.getElementById('editBtnTxt').textContent=editOn?'✔ Selesai Edit':'Edit Konten';
+  document.getElementById('editToggleBtn').classList.toggle('active',editOn);
+  document.querySelectorAll('[data-e]').forEach(el=>el.contentEditable=editOn?'true':'false');
+  toast(editOn?'✎ Mode Edit aktif — klik teks untuk mengedit':'✔ Edit selesai');
+}
+
+// ---- PROFILE PHOTO ----
 function uploadProfile(inp){
-  if(!inp.files[0])return;
+  if(!isAdmin||!inp.files[0])return;
   const fr=new FileReader();
   fr.onload=e=>{
     const frame=document.getElementById('profileFrame');
@@ -577,14 +660,14 @@ function uploadProfile(inp){
     const old=frame.querySelector('img');if(old)old.remove();
     const img=document.createElement('img');img.src=e.target.result;
     frame.insertBefore(img,frame.firstChild);
-    toast('✔ Foto profil berhasil diupload');
+    toast('✔ Foto profil diupload');
   };
   fr.readAsDataURL(inp.files[0]);
 }
 
-// === PORTFOLIO UPLOAD ===
+// ---- PORTFOLIO UPLOAD ----
 function uploadPort(inp){
-  if(!inp.files[0])return;
+  if(!isAdmin||!inp.files[0])return;
   const fr=new FileReader();
   const bg=inp.closest('.port-bg');
   fr.onload=e=>{
@@ -593,36 +676,36 @@ function uploadPort(inp){
     const img=document.createElement('img');img.src=e.target.result;
     bg.insertBefore(img,bg.firstChild);
     bg.closest('.port-item').dataset.imgSrc=e.target.result;
-    toast('✔ Gambar portfolio diupload');
+    toast('✔ Media portfolio diupload');
   };
   fr.readAsDataURL(inp.files[0]);
 }
 
-// === PORT MODAL ===
+// ---- PORT MODAL ----
 let curPort=null;
-function openPort(item){curPort=item;document.getElementById('pmTitle').value=item.querySelector('.port-title').textContent;document.getElementById('pmCat').value=item.querySelector('.port-cat').textContent;document.getElementById('portModal').classList.add('open');}
+function openPort(item){if(!isAdmin)return;curPort=item;document.getElementById('pmTitle').value=item.querySelector('.port-title').textContent;document.getElementById('pmCat').value=item.querySelector('.port-cat').textContent;document.getElementById('portModal').classList.add('open');}
 function closePort(){document.getElementById('portModal').classList.remove('open');curPort=null;}
 function savePort(){if(!curPort)return;curPort.querySelector('.port-title').textContent=document.getElementById('pmTitle').value;const c=document.getElementById('pmCat').value;curPort.querySelector('.port-cat').textContent=c;curPort.dataset.cat=c;closePort();toast('✔ Info portfolio diperbarui');}
 document.getElementById('portModal').addEventListener('click',e=>{if(e.target===document.getElementById('portModal'))closePort();});
 
-// === ADD PORTFOLIO ===
+// ---- ADD PORTFOLIO ----
 let pcount=7;
 function addPort(){
+  if(!isAdmin)return;
   pcount++;
   const grid=document.getElementById('pgrid'),addBtn=document.getElementById('addPortBtn');
   const d=document.createElement('div');d.className='port-item';d.dataset.cat='Fotografi';
   d.innerHTML=`<div class="port-actions"><button class="pac" onclick="openPort(this.closest('.port-item'))">✎</button><button class="pac" onclick="delPort(this.closest('.port-item'))">✕</button></div><div class="port-bg upload-zone" style="background:linear-gradient(135deg,#0a1015,#152030)"><span class="port-placeholder">KARYA ${pcount}</span><div class="upload-overlay"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Upload Media</span><input type="file" accept="image/*,video/*" onchange="uploadPort(this)"></div></div><div class="port-overlay"><div class="port-title">Karya Baru</div><div class="port-cat">Fotografi</div></div><div class="port-view" onclick="viewPort(this.closest('.port-item'))"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></div>`;
   grid.insertBefore(d,addBtn);
-  setHover('.port-item');
   toast('✔ Item ditambahkan');
 }
-function delPort(item){if(confirm('Hapus item ini?')){item.remove();toast('✔ Item dihapus');}}
+function delPort(item){if(!isAdmin)return;if(confirm('Hapus item ini?')){item.remove();toast('✔ Item dihapus');}}
 
-// === FULLSCREEN ===
+// ---- FULLSCREEN ----
 function viewPort(item){if(editOn)return;const img=item.querySelector('.port-bg img');if(!img)return;document.getElementById('photoModalImg').src=img.src;document.getElementById('photoModal').classList.add('open');}
 function closePhoto(){document.getElementById('photoModal').classList.remove('open');}
 
-// === TESTIMONIALS ===
+// ---- TESTIMONIALS ----
 let tests=[
   {text:"Zhan berhasil menangkap esensi brand kami dengan cara yang tidak terduga. Hasilnya jauh melampaui ekspektasi kami — visual yang tidak hanya indah, tapi juga bercerita.",author:"Ahmad Fauzi — CEO, Studio Kreatif Nusantara"},
   {text:"Kualitas video wedding kami luar biasa. Setiap momen penting terabadikan dengan sinematografi yang begitu emosional. Sangat merekomendasikan!",author:"Rini & Bagas — Pasangan Pengantin"},
@@ -633,12 +716,17 @@ function renderDots(){const dots=document.getElementById('tqDots');dots.innerHTM
 function goTest(i){const tx=document.getElementById('tqText'),au=document.getElementById('tqAuthor');tx.style.opacity='0';tx.style.transform='translateY(10px)';setTimeout(()=>{tIdx=i;tx.textContent=tests[i].text;au.textContent=tests[i].author;tx.style.transition='opacity .5s,transform .5s';tx.style.opacity='1';tx.style.transform='translateY(0)';renderDots();},300);}
 setInterval(()=>{if(!editOn)goTest((tIdx+1)%tests.length);},5000);
 renderDots();
-function editTestimonial(){const t=prompt('Teks testimonial:',tests[tIdx].text);if(t===null)return;const a=prompt('Nama & jabatan:',tests[tIdx].author);if(a===null)return;tests[tIdx]={text:t,author:a};goTest(tIdx);toast('✔ Testimonial diperbarui');}
-function addTestimonial(){const t=prompt('Teks testimonial baru:');if(!t)return;const a=prompt('Nama & jabatan:');if(!a)return;tests.push({text:t,author:a});goTest(tests.length-1);toast('✔ Testimonial ditambahkan');}
-function delTestimonial(){if(tests.length<=1){toast('⚠ Minimal 1 testimonial');return;}tests.splice(tIdx,1);goTest(0);toast('✔ Testimonial dihapus');}
+function editTestimonial(){if(!isAdmin)return;const t=prompt('Teks testimonial:',tests[tIdx].text);if(t===null)return;const a=prompt('Nama & jabatan:',tests[tIdx].author);if(a===null)return;tests[tIdx]={text:t,author:a};goTest(tIdx);toast('✔ Testimonial diperbarui');}
+function addTestimonial(){if(!isAdmin)return;const t=prompt('Teks testimonial baru:');if(!t)return;const a=prompt('Nama & jabatan:');if(!a)return;tests.push({text:t,author:a});goTest(tests.length-1);toast('✔ Testimonial ditambahkan');}
+function delTestimonial(){if(!isAdmin)return;if(tests.length<=1){toast('⚠ Minimal 1 testimonial');return;}tests.splice(tIdx,1);goTest(0);toast('✔ Testimonial dihapus');}
 
-// === SMOOTH NAV ===
+// ---- SMOOTH NAV ----
 document.querySelectorAll('a[href^="#"]').forEach(l=>{l.addEventListener('click',e=>{const t=document.querySelector(l.getAttribute('href'));if(t){e.preventDefault();t.scrollIntoView({behavior:'smooth'});}});});
+
+// ---- CSS shake animation for wrong password ----
+const st=document.createElement('style');
+st.textContent='@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}';
+document.head.appendChild(st);
 </script>
 </body>
 </html>
